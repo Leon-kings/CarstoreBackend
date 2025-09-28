@@ -1,5 +1,5 @@
 const Contact = require('../models/contact');
-const User = require('../models/user');
+const User = require('../models/User');
 const emailService = require('../mails/sendEmail');
 
 class ContactController {

@@ -3,6 +3,7 @@ const Payment = require('../models/Payment');
 const stripeService = require('../stripes/stripeService');
 const emailService = require('../mails/sendEmail');
 
+
 const customerPaymentController = {
   // Create customer with Stripe integration
   async createCustomer(req, res) {
@@ -35,7 +36,7 @@ const customerPaymentController = {
 
       // Send welcome email
       try {
-        await emailService.sendCustomerWelcome(customer, stripeCustomer.id);
+        await EmailService.sendCustomerWelcome(customer, stripeCustomer.id);
       } catch (emailError) {
         console.error('Email sending failed:', emailError);
       }
