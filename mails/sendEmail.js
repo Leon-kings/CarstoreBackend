@@ -1,9 +1,9 @@
 const nodemailer = require("nodemailer");
-const User = require("../models/user");
+const User = require("../models/User");
 
 class EmailService {
   constructor() {
-    this.transporter = nodemailer.createTransport({  // FIXED: createTransport (singular)
+    this.transporter = nodemailer.createTransport({
       host: process.env.EMAIL_HOST || "smtp.gmail.com",
       port: process.env.EMAIL_PORT || 587,
       secure: process.env.EMAIL_PORT === '465' || false,
@@ -12,6 +12,128 @@ class EmailService {
         pass: process.env.EMAIL_PASS,
       },
     });
+  }
+
+  // CAR LISTING EMAIL METHODS (ADDED FROM ORIGINAL)
+  async sendCarPostConfirmation({ carName, price, description, imageUrl, userEmail }) {
+    try {
+      const mailOptions = {
+        from: `"${process.env.FROM_NAME || 'Car Marketplace'}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+        to: userEmail,
+        subject: '🚗 Car Listing Posted Successfully!',
+        html: this.getCarPostConfirmationTemplate({ carName, price, description, imageUrl })
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('Confirmation email sent successfully');
+    } catch (error) {
+      console.error('Error sending confirmation email:', error);
+      throw new Error('Failed to send confirmation email');
+    }
+  }
+
+  async sendStatusUpdate({ carName, oldStatus, newStatus, userEmail }) {
+    try {
+      const mailOptions = {
+        from: `"${process.env.FROM_NAME || 'Car Marketplace'}" <${process.env.FROM_EMAIL || process.env.SMTP_USER}>`,
+        to: userEmail,
+        subject: `Car Status Updated - ${carName}`,
+        html: this.getStatusUpdateTemplate({ carName, oldStatus, newStatus })
+      };
+
+      await this.transporter.sendMail(mailOptions);
+      console.log('Status update email sent successfully');
+    } catch (error) {
+      console.error('Error sending status update email:', error);
+    }
+  }
+
+  // CAR LISTING TEMPLATE METHODS (ADDED FROM ORIGINAL)
+  getCarPostConfirmationTemplate({ carName, price, description, imageUrl }) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <style>
+              body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4; }
+              .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+              .header { background: #007bff; color: white; padding: 20px; text-align: center; border-radius: 10px 10px 0 0; }
+              .content { padding: 20px; }
+              .car-image { max-width: 100%; height: auto; border-radius: 10px; margin: 20px 0; }
+              .details { background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 15px 0; }
+              .success-message { color: #28a745; font-weight: bold; text-align: center; margin: 20px 0; }
+              .stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
+              .stat-card { background: #e9ecef; padding: 15px; border-radius: 5px; text-align: center; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <h1>🚗 Car Listed Successfully!</h1>
+              </div>
+              <div class="content">
+                  <p class="success-message">✅ Your car has been listed successfully and is now live on our platform!</p>
+                  
+                  <h2>${carName}</h2>
+                  
+                  <img src="${imageUrl}" alt="${carName}" class="car-image" />
+                  
+                  <div class="details">
+                      <h3>📋 Listing Details:</h3>
+                      <p><strong>Price:</strong> $${price.toLocaleString()}</p>
+                      <p><strong>Description:</strong> ${description}</p>
+                  </div>
+                  
+                  <div class="stats">
+                      <div class="stat-card">
+                          <h4>👁️ Views</h4>
+                          <p>0</p>
+                      </div>
+                      <div class="stat-card">
+                          <h4>❤️ Likes</h4>
+                          <p>0</p>
+                      </div>
+                  </div>
+                  
+                  <p>📊 Your car is now visible to potential buyers. You can track its performance in your dashboard.</p>
+                  
+                  <p>Thank you for using our service!</p>
+                  
+                  <p>Best regards,<br>Car Marketplace Team</p>
+              </div>
+          </div>
+      </body>
+      </html>
+    `;
+  }
+
+  getStatusUpdateTemplate({ carName, oldStatus, newStatus }) {
+    return `
+      <!DOCTYPE html>
+      <html>
+      <head>
+          <style>
+              body { font-family: Arial, sans-serif; }
+              .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+              .header { background: #ffc107; color: white; padding: 20px; text-align: center; }
+              .status-badge { padding: 5px 10px; border-radius: 15px; color: white; }
+              .status-active { background: #28a745; }
+              .status-sold { background: #dc3545; }
+              .status-pending { background: #ffc107; }
+          </style>
+      </head>
+      <body>
+          <div class="container">
+              <div class="header">
+                  <h1>Car Status Updated</h1>
+              </div>
+              <p>Your car listing <strong>${carName}</strong> status has been updated:</p>
+              <p>From: <span class="status-badge status-${oldStatus}">${oldStatus}</span></p>
+              <p>To: <span class="status-badge status-${newStatus}">${newStatus}</span></p>
+          </div>
+      </body>
+      </html>
+    `;
   }
 
   // CONTACT FORM EMAIL METHODS

@@ -8,6 +8,7 @@ const userRoutes = require("./routes/users");
 const contactsRoutes = require("./routes/contactsRoutes");
 const testimonialRoutes = require('./routes/testimonialRoutes');
 const customerPaymentRoutes = require('./routes/customerPaymentRoutes');
+const carRoutes = require('./routes/carRoutes');
 
 // Controllers / Services
 const MonthlyReportService = require("./controllers/statisticsController");
@@ -41,24 +42,8 @@ mongoose
 app.use("/users", userRoutes);
 app.use("/contacts", contactsRoutes);
 app.use('/testimony', testimonialRoutes);
-// Routes
-app.use('/api', customerPaymentRoutes);
-
-// Root route
-app.get('/', (req, res) => {
-  res.json({
-    success: true,
-    message: 'Stripe Customer Payment API',
-    version: '1.0.0',
-    endpoints: {
-      customers: '/customers',
-      payments: '/payments',
-      statistics: '/statistics',
-      webhook: '/webhook',
-      health: '/health'
-    }
-  });
-});
+app.use('/payments', customerPaymentRoutes);
+app.use('/cars', carRoutes);
 
 // Health check
 app.get("/health", (req, res) => {

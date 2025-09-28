@@ -19,12 +19,27 @@ const customerSchema = new mongoose.Schema({
     trim: true
   },
   address: {
-    line1: String,
-    line2: String,
-    city: String,
-    state: String,
-    postal_code: String,
-    country: { type: String, default: 'US' }
+    type: String, // Changed from object to string to match frontend
+    required: [true, 'Address is required'],
+    trim: true
+  },
+  paymentMethod: {
+    cardNumber: {
+      type: String,
+      trim: true
+    },
+    expiry: {
+      type: String,
+      trim: true
+    },
+    cvv: {
+      type: String,
+      trim: true
+    },
+    nameOnCard: {
+      type: String,
+      trim: true
+    }
   },
   stripeCustomerId: {
     type: String,
@@ -53,10 +68,10 @@ const customerSchema = new mongoose.Schema({
     enum: ['active', 'inactive', 'premium', 'suspended'],
     default: 'active'
   },
-  paymentMethod: {
+  paymentType: {
     type: String,
     enum: ['card', 'bank_transfer', 'paypal', null],
-    default: null
+    default: 'card'
   },
   subscription: {
     stripeSubscriptionId: String,
