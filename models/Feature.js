@@ -9,7 +9,7 @@ const featureSchema = new mongoose.Schema({
   category: {
     type: String,
     required: true,
-    enum: ['technology', 'safety', 'performance', 'comfort', 'entertainment', 'design']
+    enum: ['technology', 'safety', 'performance', 'comfort', 'entertainment']
   },
   description: {
     type: String,
@@ -23,18 +23,20 @@ const featureSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  cloudinary_id: {
+    type: String
+  },
   icon: {
-    type: String,
-    default: ''
+    type: String, 
+    required: true
   },
   status: {
     type: String,
-    enum: ['new', 'popular', 'upcoming', 'legacy'],
+    enum: ['new', 'updated', 'coming-soon', 'standard'],
     default: 'new'
   },
   releaseDate: {
-    type: Date,
-    required: true
+    type: Date
   },
   benefits: [{
     type: String
@@ -42,27 +44,20 @@ const featureSchema = new mongoose.Schema({
   availableIn: [{
     type: String
   }],
-  views: {
-    type: Number,
-    default: 0
-  },
   isActive: {
     type: Boolean,
     default: true
   },
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  order: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true
 });
 
-// Indexes for better performance
+// Index for better performance
 featureSchema.index({ category: 1, status: 1 });
-featureSchema.index({ releaseDate: 1 });
-featureSchema.index({ isActive: 1 });
-featureSchema.index({ views: -1 });
+featureSchema.index({ isActive: 1, order: 1 });
 
 module.exports = mongoose.model('Feature', featureSchema);
