@@ -6,9 +6,10 @@ const cors = require("cors");
 // Routes
 const userRoutes = require("./routes/users");
 const contactsRoutes = require("./routes/contactsRoutes");
-const testimonialRoutes = require('./routes/testimonialRoutes');
-const customerPaymentRoutes = require('./routes/customerPaymentRoutes');
-const carRoutes = require('./routes/carRoutes');
+const testimonialRoutes = require("./routes/testimonialRoutes");
+const customerPaymentRoutes = require("./routes/customerPaymentRoutes");
+const carRoutes = require("./routes/carRoutes");
+const featureRoutes = require("./routes/featureRoutes");
 
 // Controllers / Services
 const MonthlyReportService = require("./controllers/statisticsController");
@@ -41,9 +42,10 @@ mongoose
 // -------------------- Routes --------------------
 app.use("/users", userRoutes);
 app.use("/contacts", contactsRoutes);
-app.use('/testimony', testimonialRoutes);
-app.use('/payments', customerPaymentRoutes);
-app.use('/cars', carRoutes);
+app.use("/testimony", testimonialRoutes);
+app.use("/payments", customerPaymentRoutes);
+app.use("/cars", carRoutes);
+app.use("/features", featureRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
