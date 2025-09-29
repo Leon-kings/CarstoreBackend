@@ -28,20 +28,20 @@ exports.createFeature = async (req, res) => {
     let imageUrl = "";
     let cloudinaryId = "";
 
-    // Check if image is provided via file upload or URL
+    // Handle image upload - FIXED VERSION
     if (req.file) {
       try {
-        // Convert buffer to base64 for Cloudinary
+        // If using multer with memory storage
         const b64 = Buffer.from(req.file.buffer).toString('base64');
         const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
         
-        // Upload image to Cloudinary
         const result = await cloudinary.uploader.upload(dataURI, {
           folder: "car-features",
           resource_type: "image",
           quality: "auto:good",
           fetch_format: "auto"
         });
+        
         imageUrl = result.secure_url;
         cloudinaryId = result.public_id;
       } catch (uploadError) {
@@ -62,9 +62,25 @@ exports.createFeature = async (req, res) => {
       });
     }
 
-    // Parse arrays if they are strings
-    const benefitsArray = typeof benefits === 'string' ? JSON.parse(benefits) : benefits;
-    const availableInArray = typeof availableIn === 'string' ? JSON.parse(availableIn) : availableIn;
+    // Safely parse arrays
+    let benefitsArray = [];
+    let availableInArray = [];
+
+    try {
+      benefitsArray = benefits ? 
+        (typeof benefits === 'string' ? JSON.parse(benefits) : benefits) 
+        : [];
+    } catch (e) {
+      benefitsArray = benefits || [];
+    }
+
+    try {
+      availableInArray = availableIn ? 
+        (typeof availableIn === 'string' ? JSON.parse(availableIn) : availableIn) 
+        : [];
+    } catch (e) {
+      availableInArray = availableIn || [];
+    }
 
     // Create new feature
     const feature = new Feature({
@@ -77,12 +93,15 @@ exports.createFeature = async (req, res) => {
       icon,
       status: status || "new",
       releaseDate: releaseDate || null,
-      benefits: benefitsArray || [],
-      availableIn: availableInArray || [],
+      benefits: benefitsArray,
+      availableIn: availableInArray,
       order: order || 0
     });
 
     await feature.save();
+    
+    console.log('Feature created successfully:', feature._id);
+    
     res.status(201).json({
       success: true,
       message: "Feature created successfully!",
