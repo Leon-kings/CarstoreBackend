@@ -6,27 +6,41 @@ const sendEmail = require("../mails/sendEmail");
 // Create new car with image upload
 exports.createCar = async (req, res) => {
   try {
-    const { name, price, description, specs, userEmail } = req.body;
+    const { name, price, description, specs, userEmail, status } = req.body;
 
-    // // Validate required fields
-    // if (!name || !price || !description || !specs) {
-    //   return res.status(400).json({
-    //     success: false,
-    //     message: "Please provide all required fields",
-    //   });
-    // }
+    // Validate required fields (uncomment your validation)
+    if (!name || !price || !description || !specs) {
+      return res.status(400).json({
+        success: false,
+        message: "Please provide all required fields",
+      });
+    }
 
     let imageUrl = "";
     let cloudinaryId = "";
 
     // Check if image is provided via file upload or URL
     if (req.file) {
-      // Upload image to Cloudinary
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        folder: "cars",
-      });
-      imageUrl = result.secure_url;
-      cloudinaryId = result.public_id;
+      try {
+        // Convert buffer to base64 for Cloudinary
+        const b64 = Buffer.from(req.file.buffer).toString('base64');
+        const dataURI = "data:" + req.file.mimetype + ";base64," + b64;
+        
+        // Upload image to Cloudinary
+        const result = await cloudinary.uploader.upload(dataURI, {
+          folder: "cars",
+          resource_type: "image"
+        });
+        imageUrl = result.secure_url;
+        cloudinaryId = result.public_id;
+      } catch (uploadError) {
+        console.error('Cloudinary upload error:', uploadError);
+        return res.status(500).json({
+          success: false,
+          message: "Failed to upload image to Cloudinary",
+          error: uploadError.message
+        });
+      }
     } else if (req.body.image) {
       // Use provided image URL
       imageUrl = req.body.image;
@@ -38,15 +52,33 @@ exports.createCar = async (req, res) => {
     }
 
     // Parse specs if it's a string
-    const specsData = typeof specs === "string" ? JSON.parse(specs) : specs;
+    let specsData;
+    try {
+      specsData = typeof specs === "string" ? JSON.parse(specs) : specs;
+    } catch (parseError) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid specs format",
+        error: parseError.message
+      });
+    }
+
+    // Validate price is a number
+    const priceNumber = parseFloat(price);
+    if (isNaN(priceNumber)) {
+      return res.status(400).json({
+        success: false,
+        message: "Price must be a valid number",
+      });
+    }
 
     // Create new car
     const car = new Car({
-      name,
-      price,
+      name: name.trim(),
+      price: priceNumber,
       image: imageUrl,
       cloudinary_id: cloudinaryId,
-      description,
+      description: description.trim(),
       specs: specsData,
       status: status || "active",
     });
@@ -58,13 +90,18 @@ exports.createCar = async (req, res) => {
 
     // Send confirmation email
     if (userEmail) {
-      await sendEmail.sendCarPostConfirmation({
-        carName: name,
-        price: price,
-        description: description,
-        imageUrl: imageUrl,
-        userEmail: userEmail,
-      });
+      try {
+        await sendEmail.sendCarPostConfirmation({
+          carName: name,
+          price: priceNumber,
+          description: description,
+          imageUrl: imageUrl,
+          userEmail: userEmail,
+        });
+      } catch (emailError) {
+        console.error('Email sending error:', emailError);
+        // Don't fail the request if email fails
+      }
     }
 
     res.status(201).json({
