@@ -10,6 +10,7 @@ const testimonialRoutes = require("./routes/testimonialRoutes");
 const customerPaymentRoutes = require("./routes/customerPaymentRoutes");
 const carRoutes = require("./routes/carRoutes");
 const featureRoutes = require("./routes/featureRoutes");
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 // Controllers / Services
 const MonthlyReportService = require("./controllers/statisticsController");
@@ -46,6 +47,7 @@ app.use("/testimony", testimonialRoutes);
 app.use("/payments", customerPaymentRoutes);
 app.use("/cars", carRoutes);
 app.use("/features", featureRoutes);
+app.use('/subscriptions', subscriptionRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
