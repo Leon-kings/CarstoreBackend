@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
 // Routes
 const userRoutes = require("./routes/users");
 const contactsRoutes = require("./routes/contactsRoutes");
@@ -10,10 +9,10 @@ const testimonialRoutes = require("./routes/testimonialRoutes");
 const customerPaymentRoutes = require("./routes/customerPaymentRoutes");
 const carRoutes = require("./routes/carRoutes");
 const featureRoutes = require("./routes/featureRoutes");
+const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 // Controllers / Services
 const MonthlyReportService = require("./controllers/statisticsController");
-
 const app = express();
 
 // -------------------- Middleware --------------------
@@ -46,6 +45,7 @@ app.use("/testimony", testimonialRoutes);
 app.use("/payments", customerPaymentRoutes);
 app.use("/cars", carRoutes);
 app.use("/features", featureRoutes);
+app.use('/subscriptions', subscriptionRoutes);
 
 // Health check
 app.get("/health", (req, res) => {
