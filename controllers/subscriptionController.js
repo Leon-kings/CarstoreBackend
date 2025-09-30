@@ -1,16 +1,16 @@
-const Subscription = require('../models/Subscription');
+const Subscription = require("../models/Subscription");
 
 class SubscriptionController {
   // CREATE - Subscribe new email
   async subscribe(req, res) {
     try {
-      const { email, source = 'website_footer' } = req.body;
+      const { email } = req.body;
 
       // Validate required fields
       if (!email) {
         return res.status(400).json({
           success: false,
-          message: 'Email is required'
+          message: "Email is required",
         });
       }
 
@@ -19,18 +19,18 @@ class SubscriptionController {
       if (!emailRegex.test(email)) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid email format'
+          message: "Invalid email format",
         });
       }
 
       // Check if email already exists
-      const existingSubscription = await Subscription.findOne({ 
-        email: email.toLowerCase()
+      const existingSubscription = await Subscription.findOne({
+        email: email.toLowerCase(),
       });
 
       if (existingSubscription) {
         // If exists but unsubscribed, reactivate it
-        if (existingSubscription.status === 'unsubscribed') {
+        if (existingSubscription.status === "unsubscribed") {
           await existingSubscription.resubscribe();
           existingSubscription.source = source;
 
@@ -38,14 +38,14 @@ class SubscriptionController {
 
           return res.status(200).json({
             success: true,
-            message: 'Email resubscribed successfully',
+            message: "Email resubscribed successfully",
             data: existingSubscription,
-            action: 'resubscribed'
+            action: "resubscribed",
           });
-        } else if (existingSubscription.status === 'active') {
+        } else if (existingSubscription.status === "active") {
           return res.status(409).json({
             success: false,
-            message: 'Email already subscribed'
+            message: "Email already subscribed",
           });
         }
       }
@@ -53,33 +53,30 @@ class SubscriptionController {
       // Create new subscription
       const subscription = new Subscription({
         email: email.toLowerCase(),
-        source: source,
-       
       });
 
       await subscription.save();
 
       return res.status(201).json({
         success: true,
-        message: 'Successfully subscribed to newsletter',
+        message: "Successfully subscribed to newsletter",
         data: subscription,
-        action: 'created'
+        action: "created",
       });
-
     } catch (error) {
-      console.error('Subscription controller error:', error);
-      
+      console.error("Subscription controller error:", error);
+
       // Handle duplicate key error (MongoDB unique constraint)
       if (error.code === 11000) {
         return res.status(409).json({
           success: false,
-          message: 'Email already subscribed'
+          message: "Email already subscribed",
         });
       }
 
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -93,40 +90,49 @@ class SubscriptionController {
         status,
         source,
         search,
-        sortBy = 'subscribedAt',
-        sortOrder = 'desc'
+        sortBy = "subscribedAt",
+        sortOrder = "desc",
       } = req.query;
 
       // Build query
       const query = {};
 
       // Filter by status
-      if (status && status !== 'all') {
+      if (status && status !== "all") {
         query.status = status;
       }
 
       // Filter by source
-      if (source && source !== 'all') {
+      if (source && source !== "all") {
         query.source = source;
       }
 
       // Search by email
       if (search) {
-        query.email = { $regex: search, $options: 'i' };
+        query.email = { $regex: search, $options: "i" };
       }
 
       // Build sort object
       const sort = {};
-      const validSortFields = ['email', 'status', 'source', 'subscribedAt', 'unsubscribedAt', 'createdAt'];
-      const sortField = validSortFields.includes(sortBy) ? sortBy : 'subscribedAt';
-      sort[sortField] = sortOrder === 'asc' ? 1 : -1;
+      const validSortFields = [
+        "email",
+        "status",
+        "source",
+        "subscribedAt",
+        "unsubscribedAt",
+        "createdAt",
+      ];
+      const sortField = validSortFields.includes(sortBy)
+        ? sortBy
+        : "subscribedAt";
+      sort[sortField] = sortOrder === "asc" ? 1 : -1;
 
       // Execute query with pagination
       const subscriptions = await Subscription.find(query)
         .sort(sort)
         .limit(parseInt(limit))
         .skip((parseInt(page) - 1) * parseInt(limit))
-        .select('-__v');
+        .select("-__v");
 
       const total = await Subscription.countDocuments(query);
       const totalPages = Math.ceil(total / parseInt(limit));
@@ -140,16 +146,15 @@ class SubscriptionController {
             totalPages,
             totalSubscriptions: total,
             hasNext: parseInt(page) < totalPages,
-            hasPrev: parseInt(page) > 1
-          }
-        }
+            hasPrev: parseInt(page) > 1,
+          },
+        },
       });
-
     } catch (error) {
-      console.error('Get subscriptions controller error:', error);
+      console.error("Get subscriptions controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -158,41 +163,40 @@ class SubscriptionController {
   async getSubscriptionById(req, res) {
     try {
       const { id } = req.params;
-      
+
       if (!id) {
         return res.status(400).json({
           success: false,
-          message: 'Subscription ID is required'
+          message: "Subscription ID is required",
         });
       }
 
-      const subscription = await Subscription.findById(id).select('-__v');
-      
+      const subscription = await Subscription.findById(id).select("-__v");
+
       if (!subscription) {
         return res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: "Subscription not found",
         });
       }
 
       return res.status(200).json({
         success: true,
-        data: subscription
+        data: subscription,
       });
-
     } catch (error) {
-      console.error('Get subscription by ID controller error:', error);
-      
-      if (error.name === 'CastError') {
+      console.error("Get subscription by ID controller error:", error);
+
+      if (error.name === "CastError") {
         return res.status(400).json({
           success: false,
-          message: 'Invalid subscription ID format'
+          message: "Invalid subscription ID format",
         });
       }
 
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -201,28 +205,27 @@ class SubscriptionController {
   async getSubscriptionByEmail(req, res) {
     try {
       const { email } = req.params;
-      
+
       if (!email) {
         return res.status(400).json({
           success: false,
-          message: 'Email is required'
+          message: "Email is required",
         });
       }
 
-      const subscription = await Subscription.findOne({ 
-        email: email.toLowerCase() 
-      }).select('-__v');
+      const subscription = await Subscription.findOne({
+        email: email.toLowerCase(),
+      }).select("-__v");
 
       return res.status(200).json({
         success: true,
-        data: subscription
+        data: subscription,
       });
-
     } catch (error) {
-      console.error('Get subscription by email controller error:', error);
+      console.error("Get subscription by email controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -236,59 +239,57 @@ class SubscriptionController {
       if (!id) {
         return res.status(400).json({
           success: false,
-          message: 'Subscription ID is required'
+          message: "Subscription ID is required",
         });
       }
 
       // Allowed updates
-      const allowedUpdates = ['status', 'source', 'tags', 'metadata'];
+      const allowedUpdates = ["status", "source", "tags", "metadata"];
       const updates = {};
 
-      Object.keys(updateData).forEach(key => {
+      Object.keys(updateData).forEach((key) => {
         if (allowedUpdates.includes(key)) {
           updates[key] = updateData[key];
         }
       });
 
       // Handle status changes
-      if (updates.status === 'unsubscribed' && !updateData.unsubscribedAt) {
+      if (updates.status === "unsubscribed" && !updateData.unsubscribedAt) {
         updates.unsubscribedAt = new Date();
-      } else if (updates.status === 'active' && updateData.unsubscribedAt) {
+      } else if (updates.status === "active" && updateData.unsubscribedAt) {
         updates.unsubscribedAt = null;
       }
 
-      const subscription = await Subscription.findByIdAndUpdate(
-        id,
-        updates,
-        { new: true, runValidators: true }
-      ).select('-__v');
+      const subscription = await Subscription.findByIdAndUpdate(id, updates, {
+        new: true,
+        runValidators: true,
+      }).select("-__v");
 
       if (!subscription) {
         return res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: "Subscription not found",
         });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Subscription updated successfully',
-        data: subscription
+        message: "Subscription updated successfully",
+        data: subscription,
       });
-
     } catch (error) {
-      console.error('Update subscription controller error:', error);
-      
-      if (error.name === 'CastError') {
+      console.error("Update subscription controller error:", error);
+
+      if (error.name === "CastError") {
         return res.status(400).json({
           success: false,
-          message: 'Invalid subscription ID format'
+          message: "Invalid subscription ID format",
         });
       }
 
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -301,7 +302,7 @@ class SubscriptionController {
       if (!id) {
         return res.status(400).json({
           success: false,
-          message: 'Subscription ID is required'
+          message: "Subscription ID is required",
         });
       }
 
@@ -310,29 +311,28 @@ class SubscriptionController {
       if (!subscription) {
         return res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: "Subscription not found",
         });
       }
 
       return res.status(200).json({
         success: true,
-        message: 'Subscription deleted successfully',
-        data: { id }
+        message: "Subscription deleted successfully",
+        data: { id },
       });
-
     } catch (error) {
-      console.error('Delete subscription controller error:', error);
-      
-      if (error.name === 'CastError') {
+      console.error("Delete subscription controller error:", error);
+
+      if (error.name === "CastError") {
         return res.status(400).json({
           success: false,
-          message: 'Invalid subscription ID format'
+          message: "Invalid subscription ID format",
         });
       }
 
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -345,23 +345,25 @@ class SubscriptionController {
       if (!email) {
         return res.status(400).json({
           success: false,
-          message: 'Email is required'
+          message: "Email is required",
         });
       }
 
-      const subscription = await Subscription.findOne({ email: email.toLowerCase() });
+      const subscription = await Subscription.findOne({
+        email: email.toLowerCase(),
+      });
 
       if (!subscription) {
         return res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: "Subscription not found",
         });
       }
 
-      if (subscription.status === 'unsubscribed') {
+      if (subscription.status === "unsubscribed") {
         return res.status(400).json({
           success: false,
-          message: 'Email is already unsubscribed'
+          message: "Email is already unsubscribed",
         });
       }
 
@@ -369,15 +371,14 @@ class SubscriptionController {
 
       return res.status(200).json({
         success: true,
-        message: 'Successfully unsubscribed',
-        data: subscription
+        message: "Successfully unsubscribed",
+        data: subscription,
       });
-
     } catch (error) {
-      console.error('Unsubscribe by email controller error:', error);
+      console.error("Unsubscribe by email controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -390,23 +391,25 @@ class SubscriptionController {
       if (!email) {
         return res.status(400).json({
           success: false,
-          message: 'Email is required'
+          message: "Email is required",
         });
       }
 
-      const subscription = await Subscription.findOne({ email: email.toLowerCase() });
+      const subscription = await Subscription.findOne({
+        email: email.toLowerCase(),
+      });
 
       if (!subscription) {
         return res.status(404).json({
           success: false,
-          message: 'Subscription not found'
+          message: "Subscription not found",
         });
       }
 
-      if (subscription.status === 'active') {
+      if (subscription.status === "active") {
         return res.status(400).json({
           success: false,
-          message: 'Email is already subscribed'
+          message: "Email is already subscribed",
         });
       }
 
@@ -414,15 +417,14 @@ class SubscriptionController {
 
       return res.status(200).json({
         success: true,
-        message: 'Successfully resubscribed',
-        data: subscription
+        message: "Successfully resubscribed",
+        data: subscription,
       });
-
     } catch (error) {
-      console.error('Resubscribe by email controller error:', error);
+      console.error("Resubscribe by email controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Internal server error'
+        message: "Internal server error",
       });
     }
   }
@@ -431,17 +433,16 @@ class SubscriptionController {
   async getStatistics(req, res) {
     try {
       const statistics = await Subscription.getStatistics();
-      
+
       return res.status(200).json({
         success: true,
-        data: statistics
+        data: statistics,
       });
-
     } catch (error) {
-      console.error('Get statistics controller error:', error);
+      console.error("Get statistics controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to get statistics'
+        message: "Failed to get statistics",
       });
     }
   }
@@ -454,7 +455,7 @@ class SubscriptionController {
       if (!startDate || !endDate) {
         return res.status(400).json({
           success: false,
-          message: 'Start date and end date are required'
+          message: "Start date and end date are required",
         });
       }
 
@@ -465,29 +466,31 @@ class SubscriptionController {
       if (isNaN(start.getTime()) || isNaN(end.getTime())) {
         return res.status(400).json({
           success: false,
-          message: 'Invalid date format'
+          message: "Invalid date format",
         });
       }
 
       if (start > end) {
         return res.status(400).json({
           success: false,
-          message: 'Start date cannot be after end date'
+          message: "Start date cannot be after end date",
         });
       }
 
-      const subscriptions = await Subscription.getSubscriptionsByDateRange(startDate, endDate);
+      const subscriptions = await Subscription.getSubscriptionsByDateRange(
+        startDate,
+        endDate
+      );
 
       return res.status(200).json({
         success: true,
-        data: subscriptions
+        data: subscriptions,
       });
-
     } catch (error) {
-      console.error('Get subscriptions by date range controller error:', error);
+      console.error("Get subscriptions by date range controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to get subscriptions by date range'
+        message: "Failed to get subscriptions by date range",
       });
     }
   }
@@ -495,42 +498,49 @@ class SubscriptionController {
   // EXPORT SUBSCRIPTIONS
   async exportSubscriptions(req, res) {
     try {
-      const { status = 'active', format = 'csv' } = req.query;
+      const { status = "active", format = "csv" } = req.query;
 
       const query = {};
-      if (status && status !== 'all') {
+      if (status && status !== "all") {
         query.status = status;
       }
 
       const subscriptions = await Subscription.find(query)
-        .select('email source subscribedAt status')
+        .select("email source subscribedAt status")
         .sort({ subscribedAt: -1 });
 
-      if (format === 'json') {
+      if (format === "json") {
         return res.status(200).json({
           success: true,
-          data: subscriptions
+          data: subscriptions,
         });
       }
 
       // Default to CSV
-      const csvHeaders = 'Email,Source,Status,Subscribed At\n';
-      const csvRows = subscriptions.map(sub => 
-        `"${sub.email}","${sub.source}","${sub.status}","${sub.subscribedAt.toISOString()}"`
-      ).join('\n');
-      
-      const csv = csvHeaders + csvRows;
-      
-      res.setHeader('Content-Type', 'text/csv');
-      res.setHeader('Content-Disposition', `attachment; filename=subscriptions-${status}-${Date.now()}.csv`);
-      
-      return res.send(csv);
+      const csvHeaders = "Email,Source,Status,Subscribed At\n";
+      const csvRows = subscriptions
+        .map(
+          (sub) =>
+            `"${sub.email}","${sub.source}","${
+              sub.status
+            }","${sub.subscribedAt.toISOString()}"`
+        )
+        .join("\n");
 
+      const csv = csvHeaders + csvRows;
+
+      res.setHeader("Content-Type", "text/csv");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=subscriptions-${status}-${Date.now()}.csv`
+      );
+
+      return res.send(csv);
     } catch (error) {
-      console.error('Export subscriptions controller error:', error);
+      console.error("Export subscriptions controller error:", error);
       return res.status(500).json({
         success: false,
-        message: 'Failed to export subscriptions'
+        message: "Failed to export subscriptions",
       });
     }
   }

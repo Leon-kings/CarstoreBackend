@@ -2,7 +2,6 @@ require("dotenv").config();
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-
 // Routes
 const userRoutes = require("./routes/users");
 const contactsRoutes = require("./routes/contactsRoutes");
@@ -14,7 +13,6 @@ const subscriptionRoutes = require('./routes/subscriptionRoutes');
 
 // Controllers / Services
 const MonthlyReportService = require("./controllers/statisticsController");
-
 const app = express();
 
 // -------------------- Middleware --------------------

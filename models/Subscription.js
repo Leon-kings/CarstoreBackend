@@ -14,24 +14,14 @@ const subscriptionSchema = new mongoose.Schema({
     enum: ['active', 'unsubscribed', 'bounced'],
     default: 'active'
   },
-  source: {
-    type: String,
-    default: 'website_footer'
-  },
+
   subscribedAt: {
     type: Date,
     default: Date.now
   },
   unsubscribedAt: {
     type: Date
-  },
-  metadata: {
-    type: Object,
-    default: {}
-  },
-  tags: [{
-    type: String
-  }]
+  }
 }, {
   timestamps: true
 });
